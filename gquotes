@@ -1,0 +1,36 @@
+#!/bin/zsh
+[[ $# -eq 0 ]] && { echo Usage: $(basename $0) argument >&2; exit 1 }
+
+cd ~/Desktop
+
+k=1
+f="${1##*/}"
+l="$f.log"
+
+IFS=$'\n'
+
+page=$(curl -s $1)
+numpages=${2:-$(<<< $page | grep -Eo '\?page=[0-9]+' | grep -Eo '[0-9]+' | sort -nr | head -n 1)}
+[[ ! $numpages =~ '^[0-9]+$' ]] && { echo Invalid URL. >&2; exit 1 }
+
+echo -n "\rPage 1 / $numpages..."
+
+for i in {1..$numpages}
+do
+
+  [[ $i -gt 1 ]] && page=$(curl -s "$1?page=$i")
+
+  q=($(<<< $page | grep -o '&ldquo;.*&rdquo;'))
+
+  for quote in $q
+  do
+    echo -n "$k. " >> $l
+    quote[1]=${(U)quote[1]}
+    [[ ! $quote[-1] =~ '[\?\!\.]' ]] && quote=$quote'.'
+    <<< $quote | sed 's/&ldquo;//' | sed 's/&rdquo;//' | sed 's/<br \/>/ /g' | sed 's/  / /g' >> $l
+    echo >> $l
+    (( k++ ))
+  done
+
+  echo -n "\rPage $i / $numpages ($k quotes)..."
+done
