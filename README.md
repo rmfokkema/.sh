@@ -1,6 +1,6 @@
 # .sh
 
-Some of my shell (zsh) scripts. Also contains: AppleScript.
+Some of my shell scripts. Also: AppleScript.
 
  ## appicons
  Generate icon files or icns-file based on input image.
