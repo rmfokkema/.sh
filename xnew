@@ -1,0 +1,61 @@
+#!/bin/zsh
+[[ $# -eq 0 ]] && { echo Usage: $(basename $0) '[mac|ios] name' >&2; exit 1 }
+
+LOC=~/Developer/.new
+
+type=${1:='mac'}
+
+case "$type" in
+	  'mac') TEMP_NAME='new_mac_app_storyboard_swift_123' ;;
+	  'ios') TEMP_NAME='new_ios_app_storyboard_swift_123' ;;
+
+	  *) echo 'Invalid type.' >& 2; exit 1;;
+esac
+
+name="$2"
+	  while [ -z "$name" ]
+	  do
+			 read 'name?Project name? '
+	  done
+	  [ -d ~/Developer/$name ] && { "Project already exists: $name" >&2; exit 1 }
+
+#echo Type: $type
+#echo TEMP_NAME: $TEMP_NAME
+#echo Project name: $name
+
+# Verplaats map naar $dev
+cp -R $LOC/$TEMP_NAME ~/Developer/$name
+mv ~/Developer/$name/$TEMP_NAME ~/Developer/$name/$name
+mv ~/Developer/$name/$TEMP_NAME.xcodeproj ~/Developer/$name/$name.xcodeproj
+
+# Vervang $TEMP_NAME.entitlements door nieuwe_naam.entitlements
+replace=`<<< "$name" | tr ' ' '_'`
+
+IFS=$'\n' files=(`grep -r "$TEMP_NAME.entitlements" ~/Developer/$name | awk -F ':' '{ print $1 | "sort -u" }'`)
+for file in $files
+do
+	  sed -i '' "s/$TEMP_NAME\.entitlements/$replace\.entitlements/g" $file
+done
+
+mv ~/Developer/$name/$name/$TEMP_NAME.entitlements ~/Developer/$name/$name/$replace.entitlements
+
+# Vervang bundle identifier; com.rmfokkema.$TEMP_NAME met com.rmfokkema.iets-met-spaties
+temp_bundle_name=`<<< "$TEMP_NAME" | tr '_' '-'`
+replace=`<<< "$name" | tr ' ' '-'`
+
+IFS=$'\n' files=(`grep -r "com.rmfokkema.$temp_bundle_name" ~/Developer/$name | awk -F ':' '{ print $1 | "sort -u" }'`)
+for file in $files
+do
+	  sed -i '' "s/com\.rmfokkema\.$temp_bundle_name/com\.rmfokkema\.$replace/g" $file 2>/dev/null
+done
+
+# Laatste sed: letterlijke $TEMP_NAME vervangen met $name
+IFS=$'\n' files=(`grep -r "$TEMP_NAME" ~/Developer/$name | awk -F ':' '{ print $1 | "sort -u" }'`)
+for file in $files
+do
+	  sed -i '' "s/$TEMP_NAME/$name/g" $file 2>/dev/null
+done
+
+#[[ $open =~ '^[Yy]$' ]] &&
+read 'open?Open project? '; open ~/Developer/$name/$name.xcodeproj
+

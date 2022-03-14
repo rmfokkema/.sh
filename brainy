@@ -1,0 +1,42 @@
+#!/bin/zsh
+
+topics=("Age" "Alone" "Amazing" "Anger" "Anniversary" "Architecture" "Art" "Attitude" "Beauty" "Best" "Birthday" "Brainy" "Business" "Car" "Chance" "Change" "Christmas" "Communication" "Computers" "Cool" "Courage" "Dad" "Dating" "Death" "Design" "Diet" "Dreams" "Easter" "Education" "Environmental" "Equality" "Experience" "Experience" "Failure" "Faith" "Family" "Famous" "Father's Day" "Fear" "Finance" "Fitness" "Food" "Forgiveness" "Freedom" "Friendship" "Funny" "Future" "Gardening" "God" "Good" "Government" "Graduation" "Great" "Happiness" "Health" "History" "Home" "Hope" "Humor" "Imagination" "Independence" "Inspirational" "Intelligence" "Jealousy" "Jealousy" "Knowledge" "Leadership" "Learning" "Legal" "Life" "Love" "Marriage" "Medical" "Memorial Day" "Men" "Mom" "Money" "Morning" "Mother's Day" "Motivational" "Movies" "Moving On" "Music" "Nature" "New Year's" "Parenting" "Patience" "Patriotism" "Peace" "Pet" "Poetry" "Politics" "Positive" "Power" "Relationship" "Religion" "Religion" "Respect" "Romantic" "Sad" "Saint Patrick's Day" "Science" "Smile" "Society" "Space" "Sports" "Strength" "Success" "Sympathy" "Teacher" "Technology" "Teen" "Thankful" "Thanksgiving" "Time" "Travel" "Trust" "Truth" "Valentine's Day" "Veterans Day" "War" "Wedding" "Wisdom" "Women" "Work")
+
+while [ -z "$quote" ]
+do
+	topic=$(<<< "$topics[( RANDOM % $#topics +1 )]"	| \
+													sed "s/ //g" | \
+													sed "s/'//g" | \
+													tr '[:upper:]' '[:lower:]')
+
+													#echo "1. $topic"
+													#echo "https://www.brainyquote.com/topics/${topic}-quotes"
+	#quotes=$(curl -s "https://www.brainyquote.com/topics/${topic}-quotes -X 'null'")
+
+	quotes=$(curl -s "https://www.brainyquote.com/topics/$topic-quotes" \
+-X 'GET' \
+-H 'Cookie: _dlt=1; cto_bundle=VTjdJ19GQndjcDBUeE5sVGo5bkg5WnpkaGR5MDNJRVlMQzRwamVUUnpDa25zUWZiaUclMkI5cnhlbTBUdXRYVGdsT2N3VXl5ViUyQkpvcWJ0MktRWFVTMmZLNjAlMkZIQzFjWGV0MThYc1FmazFKcmEwaE9scThMalp5dUsxU3BhWWtkd0VReVVHTw; _ga=GA1.2.1100217964.1630520944; _gid=GA1.2.932343725.1630520944; bq_sd=%7B%22abg%22%3A%22b%22%2C%22bqPvd%22%3A3%7D; __gads=ID=5026f5629c270927-221bd21ae5c8002d:T=1630520945:RT=1630520945:S=ALNI_MYL2fxLFp-KPPKT42OhUjK2w85f1A; __qca=P0-672722678-1630520941376; addtl_consent=1~39.4.3.9.6.5.4.13.6.4.15.9.5.2.7.4.1.7.1.3.2.10.3.5.4.21.4.6.9.7.10.2.9.2.12.6.7.6.14.5.20.6.5.1.3.1.11.29.4.14.4.5.3.10.6.2.9.6.6.4.5.4.4.29.4.5.3.1.6.2.2.17.1.17.10.9.1.8.6.2.8.3.4.142.4.8.35.7.15.1.14.3.1.8.10.14.11.3.7.25.5.18.9.7.41.2.4.18.21.3.4.2.1.6.6.5.2.14.18.7.3.2.2.8.20.8.8.6.3.10.4.20.2.4.9.4.6.4.11.1.3.22.16.2.6.8.2.4.11.6.5.17.16.11.8.1.10.28.12.1.3.21.2.7.6.1.9.30.17.4.9.15.8.7.3.6.6.7.2.4.1.7.12.13.22.13.2.12.2.10.1.4.15.2.4.9.4.5.1.3.7.13.5.15.4.13.4.14.8.2.15.2.5.5.1.2.2.1.2.14.7.4.8.2.9.10.18.12.13.2.18.1.1.3.1.1.9.25.4.1.19.8.4.5.2.1.5.4.8.4.2.2.2.14.2.13.4.2.6.9.6.3.4.3.5.2.3.6.10.11.2.4.3.16.3.11.3.1.2.3.9.19.11.15.3.10.7.6.4.3.4.6.3.3.3.3.1.1.1.6.11.3.1.1.7.4.6.1.10.5.2.6.3.2.2.4.3.2.2.7.2.13.7.12.2.1.6.4.5.4.3.2.2.4.1.3.1.1.1.2.9.1.6.9.1.5.2.1.7.2.8.11.1.3.1.1.2.1.3.2.6.1.5.6.1.5.3.1.3.1.1.2.2.7.7.1.4.1.2.6.1.2.1.1.3.1.1.4.1.1.2.1.8.1.7.4.3.2.1.3.5.3.9.6.1.15.10.28.1.2.1.1.12.3.4.1.6.3.4.7.1.3.1.1.3.1.5.3.1.3.2.2.1.1.4.2.1.2.1.1.1.2.2.4.2.1.2.2.2.4.1.1.1.2.1.1.1.1.1.1.2.1.1.1.2.2.1.1.2.1.2.1.7.1.2.1.1.1.2.1.1.1.1.2.1.1.3.2.1.1.8.1.1.1.5.2.1.6.5.1.1.1.1.1.2.2.3.1.1.4.1.1.2.2.1.1.4.2.1.1.2.2.1.2.1.2.3.1.1.1.1.4.1.1.1.5.1.9.3.1.5.1.1.3.4.1.2.3.1.4.2.1.2.2.2.1.1.1.1.1.1.11.1.3.1.1.2.2.1.4.2.3.2.1.4.1.1.1.1.1.3.2.1.1.2.5.1.9.4.1.1.3.1.4.3.1.4.5.1.7.2.1.1.1.2.1.1.1.4.2.1.12.1.1.3.1.2.2.3.1.2.1.1.1.2.1.1.2.1.1.1.1.2.1.3.1.5.1.2.4.3; euconsent-v2=CPL3cBDPL3cBDAKAhAENBpCsAP_AAH_AACiQILtf_X__bX9j-_59f_t0eY1P9_r_v-Qzjhfdt-8F2L_W_L0X42E7NF36pq4KuR4Eu3LBIQNlHMHUTUmwaokVrzPsak2Mr6NKJ7LEmnMZO2dYGHtPn91TuZKY7_78__fz3z-v_t___9f3r-3_3__5_X---_e_V399zLv9____39nN___9uCCYBJhqXkAXYljgybRpVCiBGFYSHQCgAooBhaJrABgcFOysAj1BCwAQmoCMCIEGIKMGAQACAQBIREBIAWCARAEQCAAEAKkBCAAiYBBYAWBgEAAoBoWIEUAQgSEGRwVHKYEBEi0UE9lYAlF3saYQhllgBQKP6KjARKEECwMhIWDmOAJAS4AA.YAAAAAAAAAAA; __cf_bm=39404860a96c83f3736fa29192f0ef7cc8b8959a-1630520940-1800-AYtESD3EwSBx/fkiNMGSRfQCmE6DXDx6lH3mw1t4+8pr2UydLuS1eMmQmGU+Gc3h3arsdJE1GhyYRNWFPu6jg7AKzacqnXzdGCmKImOl+F2AdOpd+bUD9kMk/pTY+irBCQ==; cf_chl_2=; cf_chl_prog=; cf_clearance=Sy4kBR.DRjqY1XIRoCuSJ4TcEav.rjkx9uThVzMVr30-1630520940-0-250; cf_chl_prog=a11; cf_chl_2=06e751621087a6e' \
+-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' \
+-H 'Host: www.brainyquote.com' \
+-H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15' \
+-H 'Accept-Language: nl-nl' | tr '\n' ' ')
+
+
+quotes=$(<<< "$quotes" | sed 's/<\/a>/<\/a>\n/g')
+
+	quoted=$(<<< "$quotes"	| \
+							grep -o 'space-between">.*<img' | \
+							sed 's/space-between">//' | \
+							sed "s/&#39;/'/g" | \
+							sed 's/<img//')
+
+	quotes=("${(f)quoted}")
+
+	quote=`<<< "$quotes[( RANDOM % $#quotes + 1 )]" | sed -E 's/^ //' |sed -E 's/\. $/\./'`
+
+	[ $(grep -c '[A-Za-z]' <<< "$quote") = 0 ] && unset quote
+done
+
+[ $(id -u) -eq 0 ] && defaults write /Library/Preferences/com.apple.loginwindow.plist LoginwindowText "$quote"
+
+echo "$quote"

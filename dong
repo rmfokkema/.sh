@@ -1,0 +1,38 @@
+#!/bin/zsh
+
+function osa {
+ osascript -e "tell application \"System Events\" to $1"
+}
+
+function dong
+# All the power management I need.
+{
+    case $1 in
+        -1)     echo 'Going to sleep!' >&2
+                osa 'sleep'
+                ;;
+        0)      echo 'Shutting down...' >&2
+                osa 'shut down'
+                ;;
+        1)      echo 'Rebooting...!' >&2
+                osa 'restart'
+                ;;
+
+        2)	read -s p
+		echo $p | sudo -S pmset schedule wake "$(date -j -v +3S +'%m/%d/%y %H:%M:%S')"
+		sleep 3
+
+		# Check if screen saver is running...
+		s=`ps -ax | grep /System/Library/CoreServices/ScreenSaverEngine.app | wc -l`
+		(( $s == 2 )) && osa "keystroke \"\r\""
+
+		osa "keystroke \"$p\r\""
+
+                echo 'Awake!' >&2
+                ;;
+
+        *)  echo ' * ?'
+    esac
+}
+
+dong $1

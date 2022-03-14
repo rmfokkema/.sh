@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# When one needs to take a short break.
+
+#osa='tell application "System Events" to get the display name of the current desktop'
+#d=$(osascript -e "$osa")
+
+# How many of them has he made...?
+n=$(curl -s "https://xkcd.com/" | grep 'id="ctitle"' -A3 | tail -1 | grep -m1 -o '/[0-9]*/' | sed 's/\///g')
+
+# Surprise
+r=$(($RANDOM%$n))
+
+echo
+echo "xkcd #$r"
+echo
+
+# Get the artwork URL
+xkcd=$(curl -s "https://xkcd.com/$r/" | grep -A 1 'id="comic"' | grep -o 'imgs\..*[png|jpg]" title' | sed 's/" title//g')
+
+if ! [ -d ~/xkcd ]; then mkdir ~/xkcd; fi
+
+echo "https://$xkcd"
+d=~/xkcd/$(basename "$xkcd")
+echo $d
+
+curl https://$xkcd -o $d
+echo Done.
+
+xkcd=$d
+
+h=$(sips -g pixelHeight $xkcd | awk '/pixelHeight/{print $2}')
+w=$(sips -g pixelWidth $xkcd | awk '/pixelWidth/{print $2}')
+
+echo "$w x $h"
+
+rs=
+if [ $h -gt 1050 ] || [ $w -gt 1680 ]
+then
+rs=" --resampleHeightWidthMax 1050"
+fi
+
+xkcd=$(basename "$xkcd")
+
+echo "sips $rs --cropToHeightWidth 1050 1680 --padColor ffffff --padToHeightWidth 1050 1680 ~/xkcd/$xkcd"
+
+echo "..."
+
+sips $rs --cropToHeightWidth 1050 1680 --padColor ffffff --padToHeightWidth 1050 1680 ~/xkcd/$xkcd
+
+echo Done.
+sleep 1
+
+osascript ~/xkcd/xkcd.scpt "$xkcd" &
+
+echo -ne "\r\r"
+echo
+#
+#
+# With sincere thanks to Randall Munroe.

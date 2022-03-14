@@ -1,0 +1,142 @@
+#!/bin/zsh
+
+[[ $# -eq 0 ]] && { echo "Usage: $0:t app [time-to-record-in-seconds] [output-file]" >& 2; exit 1 }
+
+# Wincap: make screen recordings of a specific window on your Mac.
+# Uses AppleScript in combination with the built-in `screencapture` command.
+# It's also able to resize and align a chosen window to get a full 720p-recording.
+#
+# (Depending on your screen's resolution, you could edit the variables for the video width
+# and height below ↓
+
+declare -A VIDEO
+# ------------- #
+VIDEO[width]=1280
+VIDEO[height]=720
+# ------------- #
+
+### --- No, up there ↑
+### --- (I haven't tried it myself yet, by the way.)
+
+### --- Functions
+	  rec_coordinates ()
+	  {
+			 system_profiler SPDisplaysDataType | awk -v width="$VIDEO[width]" -v height="$VIDEO[height]" \
+			 '/Resolution/ { print ($2 - width) / 2, ($4 - height) / 2 }'
+	  }
+
+	  function osa
+	  {
+			osascript -e "tell application \"System Events\" to $1" 2>/dev/null
+	  }
+### --- ###
+
+### --- Vars
+
+	  # Application name.
+	  app=${(C)1:="Finder"}
+
+	  if [[ $app != "Finder" ]]
+	  then
+			 osascript -e "tell application \"$app\" to activate" 2>/dev/null
+			 (( $? != 0 )) && { echo "App not found: $app." >& 2; exit 1 }
+			 osascript -e "tell application \"Terminal\" to activate"
+	  fi
+
+	  # Time interval (in seconds) to record.
+	  # (`screencapture` wants the time interval argument glued to the 'V'-option... :/ )
+	  timeopt=$2
+	  (( timeopt )) && timeopt="-V${timeopt}"
+
+	  # --- Out(put) file.
+          out="$3"
+          [[ "$out" =~ '^-?$' ]] && out="`uuidgen`.mov"
+          #[[ ! "$out:e" =~ 'mov|m4v|mp4' ]] && out="$out."
+          [[ ! "$out:e" = 'mov' ]] && out="$out.mov"
+          #
+          if [[ -f "$out" ]]
+          then
+                         echo "File exists: $out... Choosing random name." >& 2
+                         out="$RANDOM.$out"
+          fi
+
+### --- ###
+
+echo
+
+### --- Check if the app's main window is resizable, and ask for 720p-recording.
+
+	bounds=`osa "tell process \"$app\" to get {position, size} of window 1"`
+	bounds=("${(s/, /)bounds}")
+
+	declare -A frame
+
+	frame[x]=$bounds[1]
+	frame[y]=$bounds[2]
+	frame[w]=$bounds[3]
+	frame[h]=$bounds[4]
+
+	osa "tell process \"$app\" to set size of window 1 to { $(( frame[w] + 1 )), $(( frame[h] + 1 )) }"	
+	(( $? != 0 )) && echo "Using video size: $frame[w] x $frame[h] \n" >& 2 || can_resize=1
+
+
+	  if (( can_resize ))
+	  then
+			 rec_coords=`rec_coordinates`
+			 rec_coords=(${(s/ /)rec_coords})
+
+			 if (( rec_coords[1] > 0 && rec_coords[2] > 0 ))
+			 then
+					echo " Would you like to record at 720p? The application's main window will be resized." >& 2
+					echo -n " Record @ 720p (y|n)? "
+					read _720p
+					
+					echo
+
+					if [[ $_720p =~ '^[yY]$' ]]
+					then
+						  osa "tell process \"$app\" to set size of window 1 to {1278, 718}"
+						  osa "tell process \"$app\" to set position of window 1 to {$(( rec_coords[1] + 1 )), $(( rec_coords[2] + 1 ))}"
+
+						  _720p=1
+					fi
+			 fi
+	  fi
+
+
+if (( _720p ))
+then
+	  x=$rec_coords[1]
+	  y=$rec_coords[2]
+	  w=$VIDEO[width]
+	  h=$VIDEO[height]
+else
+	  x=$frame[x]
+	  y=$frame[y]
+	  w=$(( frame[w] + 2 ))
+	  h=$(( frame[h] + 2 ))
+	  # w=$(( frame[w] - frame[x] + 2 ))
+	  # h=$(( frame[h] - frame[y] + 2 ))
+fi
+
+	osa "tell process \"$app\" to set frontmost to true"
+
+	echo "\t Using command: 'screencapture -vkCR $x,$y,$w,$h $timeopt $out'\n\t \r"
+	###
+	screencapture -vkCR $x,$y,$w,$h $timeopt $out
+	###
+
+	(( $? == 0 )) && echo "\t Recording saved: \n\t $out \n"
+
+	osa 'tell application "Terminal" to activate'
+
+	### --- Convert to m4v?
+	read 'm4v?Convert to m4v? '
+	if [[ $m4v =~ '^[yY]$' ]]
+	then
+	  echo -n "Busy... "
+	  ffmpeg -i $out ${out:t}.m4v 2>/dev/null
+	  echo "Done."
+	fi
+
+echo

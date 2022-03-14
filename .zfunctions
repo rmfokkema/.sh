@@ -1,0 +1,377 @@
+#!/bin/zsh
+
+export IPHONE_DIMS=1125x2436
+
+l() {
+	dir=${1:="."}
+	ls -Hl "$dir" |\
+	grep -E '^d.*|^-.*' |\
+	awk '	/^d/ { dirs=dirs"\n ‣ "$NF } \
+		/^-/ { files=files"\n ∙ "$NF } \
+		END { print dirs; print files | "sort -f" }'
+
+	echo
+}
+
+ap() {
+	(( $1 == 1 )) && sudo apachectl start
+	(( $1 == 0 )) && sudo apachectl stop
+
+	(( $1 == -1 )) && sudo apachectl restart
+}
+
+speed() {
+	speed=$( 1 / $2 )
+	echo speed: $speed
+	ffmpeg -i "$1" -vf "setpts=4speed*PTS" $RANDOM.$1
+}
+
+txt() {
+	find ~/Developer/txt/ -name "$1.*" -maxdepth 1 -exec open {} \; 2> /dev/null
+}
+
+negate() {
+	convert "$1" -channel rgb -negate $(dirname "$1")/neg.$(basename "$1")
+}
+
+mask() {
+	composite -compose Dst_In -gravity center \
+            "$2" "$1" -alpha set $RANDOM.png
+}
+
+scaledown() {
+	w=`dims $1 | awk -F 'x' '{ print $1 }'`
+	h=`dims $1 | awk -F 'x' '{ print $2 }'`
+	(( w /= 2 )); (( h /= 2 ))
+	(( w % 2 == 1 )) && (( w-- ))
+	(( h % 2 == 1 )) && (( h-- ))
+	
+	ffmpeg -i $1 -vf "scale=$w:$h,setsar=1:1,setpts=0.8*PTS" ~/Desktop/$RANDOM.mp4
+}
+
+swd() {
+	if (( $1 == 0 )) && [[ -L ~/Desktop ]]
+	then
+		osascript -e 'tell application "Finder" to quit'
+		unlink ~/Desktop
+		mv ~/.Desktop ~/Desktop
+		open -a Finder
+	fi
+	[[ ! -z $1 ]] && [[ -d ~/.Desktop/$1 ]] && ln -sfh ~/.Desktop/$1 ~/Desktop || { echo Desktop not found. >&2; return 1 }
+}
+
+dr() {
+	defaults read com.apple.$1 | less
+}
+
+
+pdf() {
+	find ~/Developer/pdf/ -name "$1.*" -maxdepth 1 -exec open {} \; 2>/dev/null
+}
+
+ql() {
+	qlmanage -p $1 &> /dev/null &
+}
+
+qlt() {
+	#qlmanage -g /System/Library/QuickLook/Text.qlgenerator $1
+	
+	r=$RANDOM
+	cp "$1" /tmp/$r.txt
+	ql /tmp/$r.txt
+}
+
+screendims() {
+	system_profiler SPDisplaysDataType | awk '/Resolution/ { print $2"x"$4 }'
+}
+
+function wcc {
+	read chars; echo "\tlines\twords\tcharacters"; echo -n $chars | wc | col
+}
+
+urlencode () {
+	url=$(<<< "$1" | python3 -c "import sys;from urllib.parse import quote;print(quote(sys.stdin.read()))") 
+	echo "$url"
+	 <<< "$url" | pbcopy
+}
+
+function ghistory
+{
+	grep -i "$1" ~/.zshistory
+}
+
+function wake
+{
+    echo -n 'Password:'; read -s p
+    echo
+    sudo pmset schedule wakeorpoweron "$(date -j -v +1S +'%m/%d/%y %H:%M:%S')"
+    sleep 2
+    osa "keystroke \"$p\"" && osa 'key code 76'
+}
+
+function htm
+{
+    sed "s@<\!-- TITLE -->@$3@" blank.htm | sed "s@<\!-- STYLE -->@$1@" | sed "s@<\!-- CONTENT -->@$2@" > ~/Desktop/"$3.$RANDOM.htm"
+}
+
+function osa
+{
+    osascript -e "tell application \"System Events\" to $1"
+}
+
+function p
+{
+    osascript -e "tell application \"Terminal\" to set current settings of window 1 to settings set \"$1\""
+}
+
+function desc
+# Short description of a command, as found in man's top section.
+{
+    man "$1" | grep -m1 "     $1 -"
+}
+
+function biman
+# 'Manuals' for builtin commands.
+{
+    if [ -z $1 ]; then echo Usage: bashman [command]; return; fi
+    man bash | less -p "^       $1 "
+    #man zsh | less -p "^       $1 "
+}
+
+function byn
+# How to speak in computer language.
+{
+    echo $1 | perl -lpe '$_=unpack"B*"'
+}
+
+function sw
+# Switch file names.
+{
+    if [ -f "$1" ] && [ -f "$2" ]
+    then
+        r=$RANDOM
+        mv "$2" "$2~$r"
+        mv "$1" "$2"
+        mv "$2~$r" "$1"
+    else
+        echo "Usage: $0 <file 1> <file 2>"
+    fi
+}
+
+function url
+{
+    osascript -e "tell application \"Safari\" to tell window 1 to make new tab with properties {URL:\"$1\"}"
+}
+
+# Open a manual as PDF in Preview.
+function _man2pdf
+{
+    r="$RANDOM"
+    man -t $1 > /tmp/$r.$1.ps
+    sed -i '' 's/\/BP{/\/BP{\n0 0 0 setrgbcolor clippath fill\n1 1 1 setrgbcolor/' /tmp/$r.$1.ps
+    pstopdf /tmp/$r.$1.ps -o ~/Desktop/$1.$r.pdf >/dev/null
+    sleep 1
+    open -a Preview ~/Desktop/$1.$r.pdf
+}
+function man2pdf { _man2pdf "$@" & }
+
+function yt
+{
+    local IFS='+'
+    open "https://www.youtube.com/results?search_query=$*"
+}
+
+function pbi
+{
+    if [ -z "$@" ]
+    then
+        pb=$(pbpaste)
+    else
+        pb="$@"
+    fi
+
+    printf "$pb" > /ic/.storage/pboard/m.txt
+}
+
+function ipb
+{
+
+    if [ -f /ic/.storage/pboard/i ]
+    then
+        pbcopy < /ic/.storage/pboard/i
+    fi
+}
+
+function t
+{
+    echo
+    while true
+        do echo -ne "  $(gdate +'%-I:%M:%S:%6N %p')\r"
+    done
+    echo
+}
+
+function yesterday
+# ...all my troubles seemed so far away
+{
+	yLocation=~/Documents/Gisteren
+    if ! [ -d $yLocation ]
+    then
+        mkdir $yLocation
+        chmod u-w $yLocation
+    fi
+
+    sudo find ~/Desktop/* -maxdepth 0 ! -name '.*' ! -flags hidden ! -name ' ' -exec mv {} $yLocation \;
+}
+
+#function strp
+#{
+#	open "http://streampocket.net/?stream=$1"
+#}
+
+function il
+{
+    cd "$(osa 'tell application "Finder" to get POSIX path of (insertion location as alias)')"
+}
+
+function trl
+{
+    q=$(<<< $2 | tr '\n' ' ')
+
+    json=`
+                curl    -s -X POST -H "Content-Type: application/json" \
+                        -H "Authorization: Bearer "$(gcloud auth application-default print-access-token) \
+                        --data "{
+                            'q': "\'$q\'",
+                            'source': "\'${1%-*}\'",
+                            'target': "\'${1##*-}\'",
+                            'format': 'text'
+                            }" "https://translation.googleapis.com/language/translate/v2"
+    `
+
+    [[ $(<<< $@ | grep '\-\-debug') ]] && echo $json || print $json \
+    | grep translatedText | awk -F ': ' '{print $2}' | sed 's/"//g'
+}
+
+function ha
+{
+  ho
+  sleep 1
+  osa 'tell process "Terminal" to set visible to false'
+}
+
+function dims () {
+	[[ ! -f $1 ]] && {
+		echo File not found. >&2
+		return 1
+	}
+	type=$(file -I $1 | grep -Eo 'image|video')
+  [[ -z $type ]] && { echo Invalid file. >&2; return 1 }
+  case $type in
+    'image')
+    	sips -g all $1 | awk -F ': ' '\
+      BEGIN {} \
+      /pixelWidth/ { w=$2 } \
+      /pixelHeight/ { h=$2 } \
+      END { printf "%sx%s", w, h }'
+      ;;
+
+      'video')
+      mdls $1 | awk -F '= ' '\
+      BEGIN {} \
+      /kMDItemPixelWidth/ { w=$2 } \
+      /kMDItemPixelHeight/ { h=$2 } \
+      END { printf "%sx%s", w, h }'
+      ;;
+    esac
+}
+
+function pbg
+{
+  convert -size 1680x1050 xc:"rgb($(( RANDOM % 255 + 1)),$(( RANDOM % 255 + 1)),$(( RANDOM % 255 + 1)))" -font ~/Library/Fonts/Impact.ttf -pointsize 64 -gravity center -fill black -annotate +0+0 "$(pbpaste | fold -w 34 -s)" -fill white -annotate +0+1 "$(pbpaste | fold -w 34 -s)" $RANDOM.png
+}
+
+function dtp
+ {
+   r=$RANDOM
+   p=$(print ~/Pictures/$r.jpg)
+   curl -so $p "https://rmfokkema.nl/u/$1"
+
+   echo "set picture of desktop 1 to \"$p\""
+   osa "set picture of desktop 1 to \"$p\""
+ }
+
+function nmbr
+{
+  p=(./*)
+  k=0; for i in $p; do mv $i $k.jpg; ((k++)); done
+}
+
+function rand
+{
+  r=''
+  [[ $1 -gt 1 ]] && n=$1 || n=1
+  for i in {1..$n}; do
+    r+=$[RANDOM%10]
+  done
+  echo -n $r
+}
+
+function htmll
+{
+  xmllint --nowarning --html --xpath $2 $1 2>/dev/null
+}
+
+function g
+{
+  local IFS='+'
+  open "https://www.google.com/search?q=$*"
+}
+
+function trim
+{
+	code="$(</dev/stdin)"
+	print "$code" | tr "\n" "\t" | sed "s/\t//g" | sed -E "s/ ?= ?/=/g" | sed -E "s/ ?, ?/,/g" | sed -E "s/ ?; ?/;/g" | sed "s/: /:/g" | sed -E "s/ ?\+ ?/\+/g" | sed -E "s/ ?;?} ?/}/g" | sed -E "s/ ?{ ?/{/g" | sed 's/ (/(/g' | sed 's/) /)/g' | sed -E 's/ ?\* ?/\*/g'
+}
+
+function trim64
+{
+	< /dev/stdin | base64 | tr '\n' ' ' | sed 's/ //'
+}
+
+function js
+{
+	code="$(</dev/stdin)"
+	code=$(<<< "$code" | trim64 )
+	echo "javascript:eval(atob('$code'))"
+}
+
+function cookie
+{
+
+	< /dev/stdin | awk '/=/{print $1}'
+}
+
+function urldecode
+{
+	url=$(<<< "$1" | python3 -c "import sys;from urllib.parse import unquote;print(unquote(sys.stdin.read()))")
+	echo "$url"
+	<<< "$url" | pbcopy
+}
+
+audio () {
+	[[ $# -eq 0 ]] && { echo Usage: $(basename $0) '{video file}' >&2; return 1 }
+	file="$1"
+	name=$(basename "$file")
+	[[ ! -f "$file" ]] && { echo File not found: $name >&2; return 1 } 
+	name=${name%%.*}
+	ffmpeg -i "$file" -vn "$name" 2>/dev/null
+}
+
+track() {
+last=0; while true; do new=$(du "$1" | awk '{ print $1 }'); [[ $new == $last ]] && { osa 'display notification "Done." with title "Download"'; break } || { last=$new; sleep 10} ; done
+}
+
+volume() {
+	ffmpeg -i "$1" -filter:a volumedetect -f null /dev/null
+}

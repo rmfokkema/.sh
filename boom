@@ -1,0 +1,146 @@
+#!/bin/zsh
+[[ $# -eq 0 ]] && { echo Usage: $(basename $0) data title >&2; exit 1 }
+
+[[ ! -z $1 ]] && data=("${(f)1}") || { echo "No input found." &>2; exit 1 }
+
+urlencode () {
+	url=$(<<< "$1" | python3 -c "import sys;from urllib.parse import quote;print(quote(sys.stdin.read()))")
+	echo "$url"
+}
+
+[[ ! -z $2 ]] && title=$(urlencode $2) || { echo "No title specified." &>2; exit 1 }
+
+IFS=$'\n' data=($(pbpaste))
+
+cd ~/Desktop/
+
+OFFSET_MARGIN=-12
+
+LM=104
+WM=274
+
+POINTSIZE=84
+
+XM=95
+YM=132
+
+XM=$(( XM / 2 ))
+YM=$(( (YM - POINTSIZE + 20) / 2 ))
+
+FONT='Georgia'
+FONT_SIZE='240'
+
+#lyrics=$(< $title.log | sed -E "s/,|'//g")
+#lines=(${(f)"$(<<< $lyrics | head -n 5)"})
+
+timestamps=()
+offsets=()
+words=()
+
+# {
+for d in $data
+do
+  [[ -z $start ]] && { start=$d; continue }
+
+  setopt sh_word_split
+  d=($(<<< $d | sed -E 's/\(|,|\)//g'))
+
+  t=$(( d[1] - start ))
+  timestamps+=$t
+  offsets+=`printf '%.0f' $(( t / (1.0/60) ))`
+
+  x=$d[2]
+  y=$d[3]
+
+linen=`printf '%0.f' $(( ( y * 2 - YM ) / LM + 0.5 ))`
+  wordn=`printf '%0.f' $(( ( x * 2 - XM ) / WM + 0.5 ))`
+
+  setopt sh_word_split
+  line=($lines[$linen])
+  word=$line[$wordn]
+  words+=$word
+
+    #echo t: $timestamps[-1]
+    #echo "w: $word ($linen, $wordn)"
+    #echo
+
+done
+# } > result.log
+
+duration_p=$(( offsets[-1] + (5 * 60) ))
+
+{
+        echo \
+        '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE fcpxml><fcpxml version="1.8">
+                <resources>
+                        <format id="r1" name="FFVideoFormat720p60" frameDuration="100/6000s" width="1280" height="720" colorSpace="1-1-1 (Rec. 709)" />
+                        <asset id="r2" name="Music"hasAudio="1" audioSources="1" audioChannels="2" audioRate="44100">
+                          <media-rep kind="original-media" src="./'$title'.m4a" />
+                          </asset>
+                        <asset id="r3" name="white" hasVideo="1" format="r5">
+                        <media-rep kind="original-media" src="./white.tiff" />
+                        </asset>
+                        <asset id="r4" name="black" hasVideo="1" format="r5">
+                        <media-rep kind="original-media" src="./black.tiff" />
+                        </asset>
+                        <format id="r5" name="FFVideoFormatRateUndefined" width="1280" height="720" />
+                        <effect id="r6" name="Basic Title" uid=".../Titles.localized/Bumper:Opener.localized/Basic Title.localized/Basic Title.moti" />
+                </resources>
+
+                <event name="Boom">
+                        <project name="'$title'">'
+
+
+        echo \
+        '                       <sequence duration="'$duration_p'/60s" format="r1" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="32k">
+                                        <spine>
+                                                <asset-clip name="Music" offset="0s" duration="'$duration_p'/60s" ref="r2" audioRole="music">'
+
+            bw='black'
+            ref=4
+            fontColor='1 1 1 1'
+
+  max="$#timestamps"
+        for i in {1..$max}
+        do
+                [ $(( i % 2 )) = 0 ] && bw='white' || bw='black'
+    # word=$words[i]
+ offset=$(( offsets[i] + OFFSET_MARGIN ))
+                duration_i=$(( offsets[i+1] - offsets[i] ))
+
+    [[ $i -eq $max ]] && duration_i=$(( 4 * 60 ))
+
+                echo \
+        '                                               <video name="'$bw'" ref="r'$ref'" lane="1" offset="'$offset'/60s" duration="'$duration_i'/60s" />'
+
+        #         echo \
+        # '<title name="'$word'" lane="2" offset="'$offset'/60s" ref="r6" duration="'$duration_i'/60s">
+        #                 <param name="Position" key="9999/999166631/999166633/1/100/101" value="0 -120"/>
+        #                 <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"/>
+        #                 <text>
+        #                                 <text-style font="'$FONT'" fontSize="'$FONT_SIZE'" fontColor="'$fontColor'">'$word'</text-style>
+        #                 </text>
+        # </title>'
+        done
+
+        echo \
+        '                                       </asset-clip>
+                                        </spine>
+                                </sequence>
+                        </project>
+                </event>'
+
+        echo '</fcpxml>'
+
+} > ~/Desktop/$title.fcpxml
+
+exit
+
+open ~/Desktop/$title.fcpxml
+
+sleep 1
+
+fcimport.as
+
+# regel=(y-125)/120+1
+# woord=(x-20)/126+1

@@ -1,0 +1,82 @@
+#!/bin/zsh
+
+alias o='open'
+alias osdark='osa "tell appearance preferences to set dark mode to not dark mode"'
+
+alias ot='open -a TextEdit'
+
+alias online\?='ping 8.8.8.8'
+alias online='networksetup -switchtolocation Auto'
+alias offline='networksetup -switchtolocation Offline'
+
+### /usr/bin/w
+alias w='which'
+alias m='man'
+alias sc='screencapture'
+
+alias d='$d'
+
+alias bluetil='blueutil'
+
+alias el='vim ~/.zlogin; source ~/.zlogin'
+alias la='ls -la'
+
+alias hello='echo; quote=`defaults read /Library/Preferences/com.apple.loginwindow LoginwindowText`; echo "\t \"$quote\""; echo'
+
+alias preview='less "`fs`"'
+
+alias web='open -a Popup --args'
+
+alias k='killall'
+
+alias x='chmod u+x'
+
+alias fd='osa "tell application \"Finder\" to get POSIX path of (insertion location as alias)"'
+#alias fs='osa "tell application \"Finder\" to get POSIX path of item 1 of (selection as alias list)"'
+
+alias errorlog='pbpaste >> ~/Developer/errors'
+
+#alias wc='read chars; echo "\tlines\twords\tcharacters"; echo -n $chars | wc | col'
+
+#alias online='ping 8.8.8.8'
+
+alias ytdl='echo ja doei'
+
+alias osaresult='pbpaste | sed -E "s/{(.*)}/\1/" | sed -E "s/, ([^0-9-])/\n\1/g" | sed "s/:/–/" | column -s "–" -t 2> /dev/null'
+
+alias dates='for c in {a..z}; do ! [[ $c =~ "[EfiJKLnNoOPqQt]" ]] && echo $c \t $(date +%$c); ! [[ ${(C)c} =~ "[EfiJKLnNoOPqQt]" ]] && echo ${(C)c} \t $(date +%${(C)c}); done'
+
+alias mouse='blueutil --connect ff-00-51-ae-d2-2a'
+
+alias cls='printf "\033c"'
+
+alias ep='vim ~/.zshrc; source ~/.zshrc'
+alias zl='vim ~/.zlogin; source ~/.zlogin'
+alias fnc='vim ~/.zfunctions; source ~/.zfunctions'
+
+alias hotd='~/Library/Scripts/hotd/hotd'
+
+# Kill all, new line, delay quit and log out!
+alias ka='ko; dq & logout'
+
+#alias nle='trl nl-en $1'
+#alias enl='trl en-nl $1'
+
+alias httpr='curl -so /dev/null -w "%{http_code}"'
+
+alias bf='ls -ld -- **/*(.DOL[1])'
+
+#alias fs='osascript -e "tell application \"Finder\" to get POSIX path of first item of (selection as alias list)"'
+
+alias decode='pbpaste | base64 -D'
+
+alias w3='g "site:w3schools.com $*"'
+alias e='echo'
+
+alias randomname='sed "$(( RANDOM % 1307 + 1))!d" /usr/share/dict/propernames'
+
+alias hd='chflags hidden ~/Desktop/*'
+alias sd='chflags nohidden ~/Desktop/*'
+
+alias qf='osascript -e "tell application \"Finder\" to quit"'
+

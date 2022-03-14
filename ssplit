@@ -1,0 +1,53 @@
+#!/bin/zsh
+[[ $# = 0 ]] && { echo Usage: $(basename $0) file margin-start margin-end num-splits >&2; exit 1 }
+
+echo
+
+sdata=$(ffmpeg -i "$1" -af silencedetect=noise=-30dB:d=1 -f null - 2>&1 | grep silencedetect | sed 's/.*\]//g' )
+
+#echo $sdata
+#echo
+#echo
+#echo
+
+b=${2:-'-0.100'}
+e=${3:-'+0.400'}
+
+sdata=($(print "0 $b 0 $sdata" | grep -Eo '[0-9]+([.][0-9]+)?'))
+
+#echo $sdata
+#echo
+#echo
+
+max=$(( $#sdata - 3 ))
+
+if [ "$4" -gt 0 ]; then max=$(( $4 * 3 )); fi
+
+odir="$1~$RANDOM"
+mkdir "$odir"
+
+k=1
+
+for (( i=1; i<$max; i+=3 ))
+do
+
+    start=$( print "${sdata[$(( i+1 ))]} $b" | bc  )
+    dur=$( print "${sdata[$(( i+3 ))]} - ${sdata[$(( i+1 ))]} $e" | bc | sed 's/^\./0./' )
+
+pct=$(echo "scale=2;$i/$max" | bc | sed 's/\.//' | sed 's/\.0//' )
+
+echo start: $start
+echo dur: $dur
+
+#echo -ne "\r $pct% "
+
+#echo "ffmpeg -ss $start -t $dur -i $1 -acodec aac $odir/$(( k + 1 )).m4a"
+#file=$odir/$(( k++ )).flac
+#ffmpeg -vn -ss $start -t $dur -i $1 -acodec flac -ac 1 -ar 18000 $file &>/dev/null
+#setcomment $file "$start,$dur" &>/dev/null
+
+done
+
+#echo -ne '\r 100%\n'
+echo ' Done.'
+echo

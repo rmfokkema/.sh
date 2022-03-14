@@ -1,0 +1,89 @@
+#!/bin/zsh
+
+file=$1
+project=$2
+
+sizes=(16 32 64 128 256 512)
+
+appiconset=~/Developer/$project/$project/Assets.xcassets/AppIcon.appiconset
+
+r=$RANDOM
+tmp=/tmp/$r.png
+sips "$1" -Z $sizes[-1] --setProperty format png -o $tmp
+
+for size in $sizes
+do
+	sips $tmp -Z $size -o $appiconset/$size.png
+done
+
+ contentsjson='{
+   "images" : [
+     {
+       "filename" : "16.png",
+       "idiom" : "mac",
+       "scale" : "1x",
+       "size" : "16x16"
+     },
+     {
+       "filename" : "32.png",
+       "idiom" : "mac",
+       "scale" : "2x",
+       "size" : "16x16"
+     },
+     {
+       "filename" : "32.png",
+       "idiom" : "mac",
+       "scale" : "1x",
+       "size" : "32x32"
+     },
+     {
+       "filename" : "64.png",
+       "idiom" : "mac",
+       "scale" : "2x",
+       "size" : "32x32"
+     },
+     {
+       "filename" : "128.png",
+       "idiom" : "mac",
+       "scale" : "1x",
+       "size" : "128x128"
+     },
+     {
+       "filename" : "256.png",
+       "idiom" : "mac",
+       "scale" : "2x",
+       "size" : "128x128"
+     },
+     {
+       "filename" : "256.png",
+       "idiom" : "mac",
+       "scale" : "1x",
+       "size" : "256x256"
+     },
+     {
+       "filename" : "512.png",
+       "idiom" : "mac",
+       "scale" : "2x",
+       "size" : "256x256"
+     },
+     {
+       "filename" : "512.png",
+       "idiom" : "mac",
+       "scale" : "1x",
+       "size" : "512x512"
+     },
+     {
+       "filename" : "1024.png",
+       "idiom" : "mac",
+       "scale" : "2x",
+       "size" : "512x512"
+     }
+   ],
+   "info" : {
+     "author" : "xcode",
+     "version" : 1
+   }
+ }
+ '
+
+<<< $contentsjson > $appiconset/Contents.json

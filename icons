@@ -1,0 +1,66 @@
+#!/bin/zsh
+if [ "$#" -eq 0 ]; then
+echo "Usage: $(basename $0) <number of icons> <label> <bg color> <text color> size font" >&2
+echo -n "$(basename $0) <number of icons> <label> <bg color> <text color> size font" | pbcopy
+exit 1
+fi
+
+FONTS=$(dirname $0)/.fonts.log
+
+num_i=$1
+label=$2
+bgclr=$3
+color=$4
+size=$5
+pointsize=$(print $size/1.5 | bc)
+font=$6
+#pointsize=$(echo "$size / 3" | bc)
+#pointsize=$size
+
+[ -z $4 ] && color='white'
+[ $color = "white" ] && shadow='black' || shadow='white'
+[ $shadow = "black" ] && shadowPos='-1' || shadowPos='+1'
+
+DIR=~/Desktop/$RANDOM~icons
+mkdir $DIR
+
+if [[ -z $font ]]
+then
+  IFS=$'\n' fonts=($(< $FONTS))
+else
+  fontf=$font
+  if ! [[ -f $fontf ]]; then
+    [ -f ~/Library/Fonts/$font.ttf ] && fontf=~/Library/Fonts/$font'.ttf' || fontf=~/Library/Fonts/$font'.ttc'
+  fi
+fi
+
+ab=ABCDEFGHIJKLMNOPQRSTUVWXYZ
+clrs=(001993 0034FF 005493 0097FF 039193 058F00 058F51 0BFDFF 0FFA92 10F900 4F8F00 521C93 74FA79 74FCD6 74FDFF 76D6FF 7981FF 8FFA00 929000 935200 941100 941651 942193 9438FF D5FB78 D783FF FE41FF FF2500 FF2F92 FF7E79 FF85FF FF8AD8 FF9300 FFD478 FFFB00 FFFC78 000000 FFFFFF)
+
+print '#\t\tBackground\t\tFont'
+
+for i in {1..$1}
+do
+
+    if [ -z $font ]
+    then
+      font=$fonts[($RANDOM % $#fonts + 1)]
+      [ -f ~/Library/Fonts/$font.ttf ] && fontf=~/Library/Fonts/$font'.ttf' || fontf=~/Library/Fonts/$font'.ttc'
+    fi
+
+    [ -z $2 ] && label=$ab[($RANDOM % $#ab + 1)]
+    [ -z $3 ] && bgclr='#'$clrs[($RANDOM % $#clrs + 1)]
+
+
+    print "$i\t\t$bgclr\t\t\t$font"
+
+    convert -size ${size}x${size} canvas:$bgclr \
+        -font "$fontf" -pointsize $pointsize -gravity center \
+        -fill black -annotate +20+20 "$label" \
+        -fill white -annotate +0+0 "$label" \
+    $DIR/$i.png
+done
+
+open $DIR
+
+# -fill $shadow -annotate "+0$shadowPos" "$label" \
