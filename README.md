@@ -2,7 +2,7 @@
 
 Some of my shell scripts. Also: AppleScript.
 
-![](./sh.png)
+![](./.sh.png)
 
  ## appicons
  Generate icon files or icns-file based on input image.
